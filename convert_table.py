@@ -20,10 +20,6 @@ def parse_args():
 
 def read_csv(path):
     return pd.read_csv(path)
-    # with open(path, 'r') as f:
-    #     lines = f.readlines()
-    # lines = [line.strip().split(',') for line in lines]
-    # return lines
 
 def write_csv(path, data, header=None, create_folder=True):
     if create_folder:
@@ -36,12 +32,9 @@ def write_csv(path, data, header=None, create_folder=True):
             if header is not None:
                 f.write(",".join(header) + "\n")
             f.write(data)
-    
-    # pd_df.to_csv(path, index=False)
 
 def get_completion(prompt, model="gpt-3.5-turbo-0613", temperature=0): 
-    messages = [#{"role":"system","content":"You are Python code generator. You can only output python code no usage or any other text."},
-                {"role": "user", "content": prompt}]
+    messages = [{"role": "user", "content": prompt}]
     response = openai.ChatCompletion.create(
         model=model,
         messages=messages,
@@ -67,9 +60,9 @@ def is_values_close(source,template,source_col_name,template_col_name):
 What is the coulumn name of the feature values? Take into account that format of features may differ. Please just output the name of the column.
 {source.head()[source_col_name].to_list()}
     '''
-    print(prompt, len(prompt))
+    # print(prompt, len(prompt))
     response = get_completion(prompt)
-    print(response)
+    # print(response)
     return template_col_name in response
 
     
@@ -90,9 +83,9 @@ def get_column_mapping(source,template):
     The output should be in a format:
     {output_dict_template}
     '''
-    print(prompt, len(prompt))
+    # print(prompt, len(prompt))
     response = get_completion(prompt)
-    print(response)
+    # print(response)
 
     mapping_dict = json.loads(response)
     source2template = {}
@@ -119,9 +112,9 @@ def change_columns_format(source,template):
         <code here>
         return result
     '''
-    print(prompt, len(prompt))
+    # print(prompt, len(prompt))
     response = get_completion(prompt)
-    print(response)
+    # print(response)
     func = string_func_to_func(response, FUNCTION_NAME)
     try:
         result = func(source.to_csv(index=False))
