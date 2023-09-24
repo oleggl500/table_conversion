@@ -6,6 +6,7 @@ import os
 import json
 import pandas as pd
 import sys
+from utils import read_csv, write_csv, get_completion, string_func_to_func
 
 FUNCTION_NAME = 'convert_source_to_template'
 
@@ -17,39 +18,6 @@ def parse_args():
     parser.add_argument('--target', type=Path, default=Path('./output/result_B.csv'), help='target CSV')
 
     return parser.parse_args()
-
-def read_csv(path):
-    return pd.read_csv(path)
-
-def write_csv(path, data, header=None, create_folder=True):
-    if create_folder:
-        path.parent.mkdir(parents=True, exist_ok=True)
-
-    if type(data) == pd.DataFrame:
-        data.to_csv(path, index=False)
-    elif type(data) == str:
-        with open(path, 'w') as f:
-            if header is not None:
-                f.write(",".join(header) + "\n")
-            f.write(data)
-
-def get_completion(prompt, model="gpt-3.5-turbo-0613", temperature=0): 
-    messages = [{"role": "user", "content": prompt}]
-    response = openai.ChatCompletion.create(
-        model=model,
-        messages=messages,
-        temperature=temperature, 
-    )
-    return response.choices[0].message["content"]
-
-def abstract_conumn_names(col_names):
-    new_col_names = []
-    new2old = {}
-    for i,col_name in enumerate(col_names):
-        new_col_name = f"column_{i}"
-        new_col_names.append(new_col_name)
-        new2old[new_col_name] = col_name
-    return new_col_names, new2old
 
 def is_values_close(source,template,source_col_name,template_col_name):
     example_srring = ''
@@ -64,8 +32,6 @@ What is the coulumn name of the feature values? Take into account that format of
     response = get_completion(prompt)
     # print(response)
     return template_col_name in response
-
-    
 
 def get_column_mapping(source,template):
     output_dict_template = "{" + ", ".join([f'"{key}": [<list of column names>]' for key in template.columns]) + "}"
@@ -123,12 +89,6 @@ def change_columns_format(source,template):
         sys.exit(1)
     return result
 
-def string_func_to_func(func_str, func_name):
-    namespace = {}
-    exec(func_str, globals(), namespace)
-    convert_data_row = lambda x: namespace[func_name](x)
-    return convert_data_row
-
 def main(args,source,template,):
     try:
         print("Generating column mapping")
@@ -156,10 +116,6 @@ def main(args,source,template,):
     except Exception as e:
         print(f"Error caught: {e}")
         sys.exit(1)
-
-    
-    
-
 
 if __name__ == '__main__':
     args = parse_args()
